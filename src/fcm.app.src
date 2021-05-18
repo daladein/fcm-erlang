@@ -3,5 +3,6 @@
   {description, "This software provides an Erlang client for Firebase Cloud Messaging"},
   {vsn, "1.2.1"},
   {registered, []},
+  {applications,[kernel,stdlib,inets,ssl,lager,jsx]},
   {env, []}
  ]}.
