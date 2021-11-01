@@ -4,7 +4,8 @@
 
 -export([push/4]).
 
--define(HTTP_OPTIONS, [{body_format, binary}]).
+-define(HTTP_OPTIONS, [{timeout, 1000}]). %% set connect_timeout to 1000 too
+-define(OPTIONS, [{body_format, binary}]).
 -define(BASEURL, "https://fcm.googleapis.com/fcm/send").
 -define(JSX_OPTS, [return_maps, {labels, atom}]).
 -define(HEADERS(ApiKey), [{"Authorization", ApiKey}]).
@@ -54,7 +55,7 @@ append_token(Message, RegIds) ->
 do_push(RegIds, MapBody0, ApiKey) ->
     MapBody = append_token(MapBody0, RegIds),
     ReqBody = jsx:encode(MapBody),
-    try httpc:request(post, ?HTTP_REQUEST(ApiKey, ReqBody), [], ?HTTP_OPTIONS) of
+    try httpc:request(post, ?HTTP_REQUEST(ApiKey, ReqBody), ?HTTP_OPTIONS, ?OPTIONS) of
         {ok, {{_, 200, _}, _Headers, Body}} ->
             {ok, Body};
         {ok, {{_, 400, _}, _, Body}} ->
@@ -75,7 +76,7 @@ do_push(RegIds, MapBody0, ApiKey) ->
             {error, Reason};
         OtherError ->
             ?ERROR_MSG("Error in request. Reason was: ~p~n", [OtherError]),
-            {noreply, unknown}
+            {error, unknown}
     catch
         Exception ->
             ?ERROR_MSG("Error in request. Exception ~p while calling URL: ~p~n", [Exception, ?BASEURL]),
@@ -85,7 +86,11 @@ do_push(RegIds, MapBody0, ApiKey) ->
 retry_after_from(Headers) ->
     case proplists:get_value("retry-after", Headers) of
         undefined ->
-            no_retry;
+            %% there was 'no_retry' atom which lead to
+            %% bad arithmetic expression in erlang:'*'(no_retry, 1000)
+            %% in line 24
+            %% so now trying to set some reasonable default value: 0.5 second
+            0.5;
         RetryTime ->
             case string:to_integer(RetryTime) of
                 {Time, _} when is_integer(Time) ->

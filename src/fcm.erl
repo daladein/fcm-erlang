@@ -10,7 +10,7 @@
          start_pool_with_json_service_file/2,
          stop/1]).
 
--export([start_link/2]).
+-export([start_link/1, start_link/2]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
@@ -25,7 +25,7 @@ start_pool_with_api_key(Name, ApiKey) ->
 start_pool_with_json_service_file(Name, FilePath) ->
     fcm_sup:start_child(Name, #{service_file => FilePath}).
 
--spec stop(atom()) -> ok.
+-spec stop(atom() | pid()) -> ok.
 stop(Name) ->
     gen_server:call(Name, stop).
 
@@ -44,6 +44,9 @@ push(Name, RegIds, Message, Retry) ->
 %% ========================================================================
 %% internal functions
 %% ========================================================================
+start_link(Key) ->
+    gen_server:start_link(?MODULE, [Key], []).
+
 start_link(Name, Key) ->
     gen_server:start_link({local, Name}, ?MODULE, [Key], []).
 
