@@ -3,6 +3,7 @@
   {description, "This software provides an Erlang client for Firebase Cloud Messaging"},
   {vsn, "1.2.1"},
   {registered, []},
+  {mod, {fcm_app, []}},
   {applications,[kernel,stdlib,inets,ssl,lager,jsx]},
   {env, []}
  ]}.
